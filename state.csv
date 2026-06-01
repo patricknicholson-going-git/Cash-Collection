@@ -1,0 +1,51 @@
+customer_id,customer_name,customer_email,company,invoice_number,amount_owed,invoice_date,due_date,sequence_stage,last_contacted_date,reply_received,notes
+C001,Thomas Müller,thomas.mueller@mueller-gmbh.de,Müller GmbH,INV-2026-0412,499,2026-04-30,2026-05-30,new,,,
+C002,Laura Schmidt,laura.schmidt@schmidt-ag.de,Schmidt AG,INV-2026-0389,1199,2026-04-25,2026-05-25,new,,,
+C003,Stefan Weber,stefan.weber@weber-kg.de,Weber KG,INV-2026-0371,299,2026-04-20,2026-05-20,new,,,
+C004,Anna Fischer,anna.fischer@fischer-solutions.de,Fischer Solutions,INV-2026-0356,899,2026-04-15,2026-05-15,new,,,
+C005,Michael Becker,michael.becker@becker-partner.de,Becker & Partner,INV-2026-0341,399,2026-04-10,2026-05-10,new,,,
+C006,Sabine Braun,sabine.braun@braun-tech.de,Braun Technology,INV-2026-0326,1999,2026-04-05,2026-05-05,new,,,
+C007,Klaus Hofmann,k.hofmann@hofmann-digital.de,Hofmann Digital,INV-2026-0312,699,2026-04-01,2026-05-01,new,,,
+C008,Maria Schneider,m.schneider@schneider-retail.de,Schneider Retail,INV-2026-0401,199,2026-04-28,2026-05-28,new,,,
+C009,Peter Koch,peter.koch@koch-industries.de,Koch Industries,INV-2026-0378,2499,2026-04-22,2026-05-22,new,,,
+C010,Helga Richter,h.richter@richter-services.de,Richter Services,INV-2026-0362,499,2026-04-17,2026-05-17,new,,,
+C011,Jürgen Wolf,j.wolf@wolf-media.de,Wolf Media,INV-2026-0348,799,2026-04-12,2026-05-12,new,,,
+C012,Christine Klein,c.klein@klein-consulting.de,Klein Consulting,INV-2026-0334,1499,2026-04-07,2026-05-07,new,,,
+C013,Ralf Schröder,r.schroeder@schroeder-log.de,Schröder Logistics,INV-2026-0298,899,2026-04-01,2026-05-01,chased,2026-05-25,no,
+C014,Brigitte Neumann,b.neumann@neumann-group.de,Neumann Group,INV-2026-0285,1199,2026-03-26,2026-04-25,chased,2026-05-20,no,
+C015,Hans Schwarz,h.schwarz@schwarz-ventures.de,Schwarz Ventures,INV-2026-0271,499,2026-03-21,2026-04-20,chased,2026-05-15,no,
+C016,Gabi Zimmermann,g.zimmermann@zimm-tech.de,Zimmermann Tech,INV-2026-0258,2499,2026-03-16,2026-04-15,chased,2026-05-10,no,
+C017,Fritz Krüger,f.krueger@krueger-sys.de,Krüger Systems,INV-2026-0314,699,2026-04-05,2026-05-05,chased,2026-05-28,no,
+C018,Petra Bauer,p.bauer@bauer-ent.de,Bauer Enterprises,INV-2026-0302,1499,2026-03-31,2026-04-30,chased,2026-05-22,no,
+C019,Dieter Lange,d.lange@lange-digital.de,Lange Digital,INV-2026-0241,399,2026-03-11,2026-04-10,chased,2026-05-05,no,
+C020,Ingrid Werner,i.werner@werner-co.de,Werner & Co,INV-2026-0323,899,2026-04-10,2026-05-10,chased,2026-05-29,yes,Client confirmed payment by end of week
+C021,Wolfgang Herrmann,w.herrmann@herrmann-sol.de,Herrmann Solutions,INV-2026-0231,1999,2026-03-06,2026-04-05,chased,2026-05-01,no,
+C022,Ute Fuchs,u.fuchs@fuchs-consulting.de,Fuchs Consulting,INV-2026-0319,299,2026-04-08,2026-05-08,chased,2026-05-27,no,
+C023,Norbert Weiß,n.weiss@weiss-media.de,Weiß Media,INV-2026-0290,799,2026-03-29,2026-04-28,chased,2026-05-18,no,
+C024,Elke Berger,e.berger@berger-analytics.de,Berger Analytics,INV-2026-0275,499,2026-03-23,2026-04-22,chased,2026-05-12,no,
+C025,Roland Hartmann,r.hartmann@hartmann-group.de,Hartmann Group,INV-2026-0262,1199,2026-03-18,2026-04-17,chased,2026-05-08,no,
+C026,Monika Schulz,m.schulz@schulz-digital.de,Schulz Digital,INV-2026-0309,2499,2026-04-03,2026-05-03,chased,2026-05-26,no,
+C027,Gerhard Maier,g.maier@maier-services.de,Maier Services,INV-2026-0288,699,2026-03-28,2026-04-27,chased,2026-05-15,no,
+C028,Hildegard Frank,h.frank@frank-partner.de,Frank & Partner,INV-2026-0215,1499,2026-03-02,2026-04-01,escalated,2026-05-10,no,
+C029,Ernst Roth,e.roth@ernst-tech.de,Ernst Technology,INV-2026-0201,899,2026-02-23,2026-03-25,escalated,2026-05-05,no,
+C030,Waltraud Kramer,w.kramer@roth-logistics.de,Roth Logistics,INV-2026-0188,499,2026-02-13,2026-03-15,escalated,2026-04-28,no,
+C031,Bernhard Sommer,b.sommer@sommer-ventures.de,Sommer Ventures,INV-2026-0228,2499,2026-03-06,2026-04-05,escalated,2026-05-15,no,
+C032,Irmgard Lehmann,i.lehmann@kramer-sys.de,Kramer Systems,INV-2026-0195,1199,2026-02-18,2026-03-20,escalated,2026-04-20,no,
+C033,Günter Schreiber,g.schreiber@lehmann-ent.de,Lehmann Enterprises,INV-2026-0221,799,2026-03-11,2026-04-10,escalated,2026-05-08,no,
+C034,Renate König,r.koenig@schreiber-sol.de,Schreiber Solutions,INV-2026-0208,399,2026-02-28,2026-03-30,escalated,2026-05-01,no,
+C035,Horst Wagner,h.wagner@koenig-analytics.de,König Analytics,INV-2026-0175,1999,2026-02-08,2026-03-10,escalated,2026-04-15,no,
+C036,Edeltraud Richter,e.richter@wagner-group.de,Wagner Group,INV-2026-0222,699,2026-03-16,2026-04-15,escalated,2026-05-12,no,
+C037,Albrecht Braun,a.braun@richter-digital.de,Richter Digital,INV-2026-0168,2499,2026-02-03,2026-03-05,escalated,2026-04-10,no,
+C038,Lieselotte Stein,l.stein@braun-partners.de,Braun & Partners,INV-2026-0142,1499,2026-01-29,2026-02-28,debtist,2026-04-01,no,Handed to Debtist
+C039,Siegfried Weber,s.weber@stein-tech.de,Stein Technology,INV-2026-0128,899,2026-01-16,2026-02-15,debtist,2026-03-20,no,Handed to Debtist
+C040,Marianne Böhm,m.boehm@guenther-services.de,Günther Services,INV-2026-0112,2499,2026-01-02,2026-02-01,debtist,2026-03-10,no,Handed to Debtist
+C041,Friedhelm Hahn,f.hahn@boehm-media.de,Böhm Media,INV-2025-0398,1199,2025-12-16,2026-01-15,debtist,2026-03-01,no,Handed to Debtist
+C042,Brunhilde Keller,b.keller@hahn-consulting.de,Hahn Consulting,INV-2026-0101,499,2025-12-31,2026-01-30,debtist,2026-03-15,no,Handed to Debtist
+C043,Helmut Dietrich,h.dietrich@keller-group.de,Keller Group,INV-2026-0155,1499,2026-02-01,2026-03-03,resolved,2026-03-15,yes,Paid in full
+C044,Frieda Brandt,f.brandt@dietrich-kg.de,Dietrich KG,INV-2026-0165,899,2026-02-10,2026-03-12,resolved,2026-03-20,yes,Paid in full
+C045,Annegret Voigt,a.voigt@brandt-digital.de,Brandt Digital,INV-2026-0178,499,2026-02-20,2026-03-22,resolved,2026-04-01,yes,Paid in full
+C046,Lothar Horn,l.horn@voigt-services.de,Voigt Services,INV-2026-0190,1199,2026-02-25,2026-03-27,resolved,2026-04-05,yes,Paid in full
+C047,Christa Sauer,c.sauer@horn-co.de,Horn & Co,INV-2026-0202,299,2026-03-01,2026-03-31,resolved,2026-04-10,yes,Paid in full
+C048,Walter Günther,w.guenther@sauer-ent.de,Sauer Enterprises,INV-2026-0218,2499,2026-03-10,2026-04-09,resolved,2026-04-25,yes,Paid in full
+C049,Liesbeth Zimmermann,l.zimmermann@guenther-analytics.de,Günther Analytics,INV-2026-0235,699,2026-03-20,2026-04-19,resolved,2026-05-01,yes,Paid in full
+C050,Eberhard Voigt,e.voigt@zimm-kg.de,Zimmermann KG,INV-2026-0252,1999,2026-03-28,2026-04-27,resolved,2026-05-08,yes,Paid in full
