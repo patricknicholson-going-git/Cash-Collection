@@ -392,7 +392,8 @@ def load_data():
         df["am_email_hs"] = df["company"].map(lambda c: hs.get(c, {}).get("am_email", ""))
         df["plan_tier"]   = df["company"].map(lambda c: hs.get(c, {}).get("plan_tier", ""))
         df["days_since_churn"] = df["churn_date"].apply(
-            lambda d: (TODAY - date.fromisoformat(d)).days if d else None
+            lambda d: (TODAY - date.fromisoformat(str(d)[:10])).days
+            if d and str(d) not in ("", "None", "nan") else None
         )
         # Only overwrite am_name if not already set manually in state.csv
         df["am_name"] = df.apply(
