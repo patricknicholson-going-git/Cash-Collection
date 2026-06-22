@@ -1,0 +1,5 @@
+.streamlit/secrets.toml
+*.pyc
+__pycache__/
+add_gcp_secret.py
+migrate_to_sheets.py
