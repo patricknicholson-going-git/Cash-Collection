@@ -6,6 +6,7 @@ import email as email_lib
 import re
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from email.mime.application import MIMEApplication
 from datetime import date, timedelta
 from pathlib import Path
 
@@ -17,8 +18,25 @@ CONTACTS_FILE = Path(__file__).parent / "contacts.csv"
 TODAY = date.today()
 MRR_THRESHOLD        = 500   # live customers ≥ €500 MRR → AM owned
 HIGH_VALUE_THRESHOLD = 5000  # flag accounts above this for urgent attention
+WORKFLOW_THRESHOLD   = 5000  # W1/W2 cutoff: ≥ this → W2 (AM review before Debtist)
+TEST_EMAIL           = "patrick.nicholson-going@join.com"  # test data — excluded from totals, shown in Test tab
 MIN_INVOICE_AMOUNT   = 50    # skip invoices below this
 NON_LIVE_SKIP_DAYS   = 30    # non-live churned > this many days → start at email_3
+
+PAYMENT_DETAILS_EN = (
+    "Please transfer payment to:\n"
+    "Account holder: JOIN Solutions AG\n"
+    "IBAN: CH80 0022 5225 1310 2960 J\n"
+    "BIC/Swift: UBSWCHZH80A\n"
+    "Bank: UBS Switzerland AG"
+)
+PAYMENT_DETAILS_DE = (
+    "Bitte überweisen Sie den Betrag an:\n"
+    "Kontoinhaber: JOIN Solutions AG\n"
+    "IBAN: CH80 0022 5225 1310 2960 J\n"
+    "BIC/Swift: UBSWCHZH80A\n"
+    "Bank: UBS Switzerland AG"
+)
 
 # ── Workflow 1: Standard (< €2k total per customer) ───────────────────────────
 # email_1 (Day 1) → +7d → email_2 (Day 8) → +14d → email_3 (Day 22) → +14d → email_4 (Day 36) → +7d → Debtist
@@ -88,7 +106,7 @@ TEMPLATES = {
             "Just a quick note to let you know that invoice {invoice_number} for €{amount_due} "
             "was due on {due_date}. If you've already arranged payment, please ignore this — and thank you!\n\n"
             "If you have any questions about the invoice, feel free to reach out.\n\n"
-            "{pay_link}\n\n"
+            "{payment_details}\n\n"
             "Best,\n"
             "JOIN Finance Team\n"
             "collections@join.com"
@@ -102,7 +120,7 @@ TEMPLATES = {
             "which is now {days_overdue} days overdue.\n\n"
             "If there's anything preventing payment or you'd like to discuss the invoice, "
             "just reply to this email — happy to help sort it out.\n\n"
-            "{pay_link}\n\n"
+            "{payment_details}\n\n"
             "Best,\n"
             "JOIN Finance Team\n"
             "collections@join.com"
@@ -116,7 +134,7 @@ TEMPLATES = {
             "remains unpaid and is now {days_overdue} days overdue.\n\n"
             "Please arrange payment within the next 7 days. If you're facing any difficulties, "
             "reply to this email and we'll work something out.\n\n"
-            "{pay_link}\n\n"
+            "{payment_details}\n\n"
             "JOIN Finance Team\n"
             "collections@join.com"
         ),
@@ -130,7 +148,7 @@ TEMPLATES = {
             "Please arrange payment within 5 business days. If we don't hear from you, "
             "this matter will be escalated to our Debt Collection Agency (Debtist) and "
             "additional collection fees will be applied.\n\n"
-            "{pay_link}\n\n"
+            "{payment_details}\n\n"
             "JOIN Finance Team\n"
             "collections@join.com"
         ),
@@ -142,8 +160,79 @@ TEMPLATES = {
             "Just a quick note from my side — invoice {invoice_number} for €{amount_due} "
             "is still outstanding. If you've already sorted this, please ignore this message!\n\n"
             "If there's anything I can help with, just reply here.\n\n"
-            "{pay_link}\n\n"
+            "{payment_details}\n\n"
             "Best,\n"
+            "{am_name}\n"
+            "JOIN"
+        ),
+    },
+}
+
+TEMPLATES_DE = {
+    "email_1": {
+        "subject": "Zahlungserinnerung — Rechnung {invoice_number}",
+        "body": (
+            "Guten Tag {customer_name},\n\n"
+            "kurze Erinnerung: Rechnung {invoice_number} über €{amount_due} war am {due_date} fällig. "
+            "Falls Sie die Zahlung bereits veranlasst haben, betrachten Sie diese Nachricht bitte als gegenstandslos — herzlichen Dank!\n\n"
+            "Bei Fragen zur Rechnung stehen wir Ihnen gerne zur Verfügung.\n\n"
+            "{payment_details}\n\n"
+            "Mit freundlichen Grüßen,\n"
+            "JOIN Finance Team\n"
+            "collections@join.com"
+        ),
+    },
+    "email_2": {
+        "subject": "Erinnerung — Rechnung {invoice_number} überfällig",
+        "body": (
+            "Guten Tag {customer_name},\n\n"
+            "wir möchten Sie erneut an Rechnung {invoice_number} über €{amount_due} erinnern, "
+            "die seit {days_overdue} Tagen überfällig ist.\n\n"
+            "Falls es Fragen oder Hindernisse gibt, antworten Sie gerne auf diese E-Mail — "
+            "wir helfen Ihnen gerne weiter.\n\n"
+            "{payment_details}\n\n"
+            "Mit freundlichen Grüßen,\n"
+            "JOIN Finance Team\n"
+            "collections@join.com"
+        ),
+    },
+    "email_3": {
+        "subject": "Dringend — Rechnung {invoice_number}",
+        "body": (
+            "Guten Tag {customer_name},\n\n"
+            "trotz unserer vorherigen Erinnerungen ist Rechnung {invoice_number} über €{amount_due} "
+            "weiterhin offen und seit {days_overdue} Tagen überfällig.\n\n"
+            "Wir bitten Sie, die Zahlung innerhalb der nächsten 7 Tage zu veranlassen. "
+            "Bei Schwierigkeiten antworten Sie bitte auf diese E-Mail — wir finden gemeinsam eine Lösung.\n\n"
+            "{payment_details}\n\n"
+            "JOIN Finance Team\n"
+            "collections@join.com"
+        ),
+    },
+    "email_4": {
+        "subject": "Letzte Mahnung — Rechnung {invoice_number}",
+        "body": (
+            "Guten Tag {customer_name},\n\n"
+            "dies ist eine letzte Mahnung bezüglich Rechnung {invoice_number} über €{amount_due}, "
+            "die seit {days_overdue} Tagen überfällig ist.\n\n"
+            "Bitte veranlassen Sie die Zahlung innerhalb von 5 Werktagen. Sollten wir keine Rückmeldung "
+            "erhalten, wird die Angelegenheit an unser Inkassobüro (Debtist) übergeben und "
+            "zusätzliche Inkassogebühren werden anfallen.\n\n"
+            "{payment_details}\n\n"
+            "JOIN Finance Team\n"
+            "collections@join.com"
+        ),
+    },
+    "am_email": {
+        "subject": "Kurze Nachricht — Rechnung {invoice_number}",
+        "body": (
+            "Guten Tag {customer_name},\n\n"
+            "kurze Nachricht meinerseits — Rechnung {invoice_number} über €{amount_due} "
+            "ist noch ausstehend. Falls Sie die Zahlung bereits veranlasst haben, "
+            "betrachten Sie diese Nachricht bitte als gegenstandslos!\n\n"
+            "Bei Fragen stehe ich Ihnen gerne zur Verfügung.\n\n"
+            "{payment_details}\n\n"
+            "Mit freundlichen Grüßen,\n"
             "{am_name}\n"
             "JOIN"
         ),
@@ -181,6 +270,12 @@ def send_email(to_addr, subject, body):
         msg["To"] = to_addr
         msg["Subject"] = subject
         msg.attach(MIMEText(body, "plain"))
+        pdf_path = Path(__file__).parent / "bank_details.pdf"
+        if pdf_path.exists():
+            with open(pdf_path, "rb") as f:
+                part = MIMEApplication(f.read(), _subtype="pdf")
+                part.add_header("Content-Disposition", "attachment", filename="JOIN_Bank_Details.pdf")
+                msg.attach(part)
         with smtplib.SMTP(creds["smtp_host"], int(creds["smtp_port"])) as srv:
             srv.starttls()
             srv.login(creds["sender"], creds["app_password"])
@@ -308,20 +403,20 @@ def check_replies():
         return set(), []
 
 
-def fill_template(row, tpl_key):
-    tpl = TEMPLATES.get(tpl_key)
+def fill_template(row, tpl_key, lang="de"):
+    templates = TEMPLATES_DE if lang == "de" else TEMPLATES
+    tpl = templates.get(tpl_key)
     if not tpl:
         return "", ""
-    xero = str(row.get("xero_link", "") or "").strip()
-    pay_link = f"Pay now → {xero}" if xero and xero.lower() not in ("nan", "none", "") else "Pay now → (contact us to arrange payment)"
+    payment_details = PAYMENT_DETAILS_DE if lang == "de" else PAYMENT_DETAILS_EN
     data = {
-        "customer_name": extract_first_name(row.get("customer_name"), row.get("company")),
-        "invoice_number": row.get("invoice_number", ""),
-        "amount_due":     f"{float(row.get('amount_due', 0)):,.2f}",
-        "due_date":       str(row.get("due_date", "")),
-        "days_overdue":   int(row.get("days_overdue", 0)),
-        "am_name":        row.get("am_name") or "your account manager",
-        "pay_link":       pay_link,
+        "customer_name":   extract_first_name(row.get("customer_name"), row.get("company")),
+        "invoice_number":  row.get("invoice_number", ""),
+        "amount_due":      f"{float(row.get('amount_due', 0)):,.2f}",
+        "due_date":        str(row.get("due_date", "")),
+        "days_overdue":    int(row.get("days_overdue", 0)),
+        "am_name":         row.get("am_name") or "your account manager",
+        "payment_details": payment_details,
     }
     return tpl["subject"].format(**data), tpl["body"].format(**data)
 
@@ -343,11 +438,18 @@ def _use_sheets():
 
 
 # ── Data I/O ───────────────────────────────────────────────────────────────────
-@st.cache_data(ttl=10)
+@st.cache_data(ttl=60)
 def load_data():
     if _use_sheets():
         sheet = _get_gsheet()
-        records = sheet.get_all_records(default_blank="")
+        for attempt in range(3):
+            try:
+                records = sheet.get_all_records(default_blank="")
+                break
+            except Exception:
+                if attempt == 2:
+                    raise
+                import time; time.sleep(2 ** attempt)
         df = pd.DataFrame(records)
     else:
         df = pd.read_csv(STATE_FILE)
@@ -623,7 +725,7 @@ if _matched_ids:
         st.rerun()
 
 active     = df[~df["sequence_stage"].isin(["resolved", "debtist"])]
-action_df  = df[df["action_needed"] & ~df["is_paused"]].copy()
+action_df  = df[df["action_needed"] & ~df["is_paused"] & (df["customer_email"] != TEST_EMAIL)].copy()
 
 priority_weight = {
     "new": 6, "am_review": 10,
@@ -638,7 +740,7 @@ action_df = action_df.sort_values("_priority", ascending=False)
 w1_active = active[active["workflow"] == "w1"]
 w2_active = active[active["workflow"] == "w2"]
 c1, c2, c3, c4 = st.columns(4)
-c1.metric("Outstanding", f"€{active['amount_due'].sum():,.0f}")
+c1.metric("Outstanding", f"€{active[active['customer_email'] != TEST_EMAIL]['amount_due'].sum():,.0f}")
 c2.metric("Actions today", len(action_df))
 c3.metric("W1 open", len(w1_active), help="Standard (< €2,000 total)")
 c4.metric("W2 open 🔥", len(w2_active), help="High value (≥ €2,000 total) — auto emails then AM")
@@ -661,6 +763,7 @@ def _queue_cards(action_df, gmail_ok):
                 bstage    = brow["sequence_stage"]
                 bworkflow = brow["workflow"]
                 bhas_email = bool(brow.get("customer_email") and pd.notna(brow.get("customer_email")))
+                b_lang = st.session_state.get(f"lang_{bid}", "DE").lower()
                 if bstage == "new":
                     b_live  = brow.get("is_live")
                     b_churn = brow.get("days_since_churn")
@@ -676,7 +779,7 @@ def _queue_cards(action_df, gmail_ok):
                     ]
                     b_chosen = st.session_state.get(f"stage_pick_{bid}", b_opts[b_email_stages.index(b_suggested)])
                     bstart = b_email_stages[b_opts.index(b_chosen)] if b_chosen in b_opts else b_suggested
-                    bsubj, bbody = fill_template(brow, bstart)
+                    bsubj, bbody = fill_template(brow, bstart, b_lang)
                     if gmail_ok and bhas_email:
                         ok, err = send_email(brow["customer_email"], bsubj, bbody)
                         if not ok:
@@ -685,7 +788,7 @@ def _queue_cards(action_df, gmail_ok):
                             continue
                     advance(bid, bstage, bworkflow, extra={"last_send_status": f"sent {TODAY}"}, to_stage=bstart)
                 elif (bworkflow, bstage) in STAGE_EMAIL:
-                    bsubj, bbody = fill_template(brow, STAGE_EMAIL[(bworkflow, bstage)])
+                    bsubj, bbody = fill_template(brow, STAGE_EMAIL[(bworkflow, bstage)], b_lang)
                     if gmail_ok and bhas_email:
                         ok, err = send_email(brow["customer_email"], bsubj, bbody)
                         if not ok:
@@ -750,7 +853,7 @@ def _queue_cards(action_df, gmail_ok):
                     suggested = get_start_stage(
                         days_ov,
                         is_live=bool(is_live_v) if is_live_v is not None else True,
-                        days_since_churn=int(days_churn_v) if days_churn_v is not None else None,
+                        days_since_churn=int(days_churn_v) if days_churn_v is not None and pd.notna(days_churn_v) else None,
                     )
                     email_stages = ["email_1", "email_2", "email_3", "email_4"]
                     stage_options = [
@@ -766,16 +869,20 @@ def _queue_cards(action_df, gmail_ok):
                     )
                     start_stage = email_stages[stage_options.index(chosen_label)]
                     stage_hint  = STAGE_LABEL.get(start_stage, start_stage)
-                    subject, body = fill_template(row, start_stage)
-                    if st.session_state.get(f"stage_pick_last_{inv_id}") != start_stage:
+                    lang_code = st.session_state.get(f"lang_{inv_id}", "DE").lower()
+                    subject, body = fill_template(row, start_stage, lang_code)
+                    cache_key = (start_stage, lang_code)
+                    if st.session_state.get(f"tpl_last_{inv_id}") != cache_key:
                         st.session_state[f"body_{inv_id}"] = body
-                        st.session_state[f"stage_pick_last_{inv_id}"] = start_stage
+                        st.session_state[f"tpl_last_{inv_id}"] = cache_key
                     if f"body_{inv_id}" not in st.session_state:
                         st.session_state[f"body_{inv_id}"] = body
                     with st.expander(f"✉️ {STAGE_ICON.get(start_stage,'')} {subject}"):
-                        rc1, rc2 = st.columns([6, 1])
+                        rc1, rc2, rc3 = st.columns([4, 2, 1])
                         rc1.caption("Edit before sending:")
-                        if rc2.button("↺", key=f"reset_{inv_id}"):
+                        with rc2:
+                            st.radio("", ["DE", "EN"], horizontal=True, key=f"lang_{inv_id}", label_visibility="collapsed")
+                        if rc3.button("↺", key=f"reset_{inv_id}"):
                             st.session_state[f"body_{inv_id}"] = body
                             st.rerun()
                         st.text_area("Email body", key=f"body_{inv_id}", height=200, label_visibility="collapsed")
@@ -801,7 +908,12 @@ def _queue_cards(action_df, gmail_ok):
                 elif stage == "am_review" and workflow == "w2":
                     st.caption("Automated emails sent — time for a personal touch.")
                     tpl_key = STAGE_EMAIL.get((workflow, stage))
-                    subject, body = fill_template(row, tpl_key)
+                    lang_code = st.session_state.get(f"lang_{inv_id}", "DE").lower()
+                    subject, body = fill_template(row, tpl_key, lang_code)
+                    cache_key = (tpl_key, lang_code)
+                    if st.session_state.get(f"tpl_last_{inv_id}") != cache_key:
+                        st.session_state[f"body_{inv_id}"] = body
+                        st.session_state[f"tpl_last_{inv_id}"] = cache_key
                     if f"body_{inv_id}" not in st.session_state:
                         st.session_state[f"body_{inv_id}"] = body
                     am_col, _ = st.columns([3, 5])
@@ -809,10 +921,11 @@ def _queue_cards(action_df, gmail_ok):
                                                     value=row.get("am_name") or "",
                                                     placeholder="e.g. Caro")
                     with st.expander(f"✉️ {subject}", expanded=True):
-                        st.caption(f"From: {am_name_val or 'AM'} · To: {row.get('customer_email','—')}")
-                        rc1, rc2 = st.columns([6, 1])
-                        rc1.caption("Edit before sending:")
-                        if rc2.button("↺", key=f"reset_{inv_id}"):
+                        rc1, rc2, rc3 = st.columns([3, 2, 1])
+                        rc1.caption(f"From: {am_name_val or 'AM'} · To: {row.get('customer_email','—')}")
+                        with rc2:
+                            st.radio("", ["DE", "EN"], horizontal=True, key=f"lang_{inv_id}", label_visibility="collapsed")
+                        if rc3.button("↺", key=f"reset_{inv_id}"):
                             st.session_state[f"body_{inv_id}"] = body
                             st.rerun()
                         st.text_area("Email body", key=f"body_{inv_id}", height=200, label_visibility="collapsed")
@@ -839,14 +952,20 @@ def _queue_cards(action_df, gmail_ok):
 
                 elif (workflow, stage) in STAGE_EMAIL:
                     tpl_key = STAGE_EMAIL[(workflow, stage)]
-                    subject, body = fill_template(row, tpl_key)
+                    lang_code = st.session_state.get(f"lang_{inv_id}", "DE").lower()
+                    subject, body = fill_template(row, tpl_key, lang_code)
+                    cache_key = (tpl_key, lang_code)
+                    if st.session_state.get(f"tpl_last_{inv_id}") != cache_key:
+                        st.session_state[f"body_{inv_id}"] = body
+                        st.session_state[f"tpl_last_{inv_id}"] = cache_key
                     if f"body_{inv_id}" not in st.session_state:
                         st.session_state[f"body_{inv_id}"] = body
                     with st.expander(f"✉️ {subject}", expanded=True):
-                        st.caption(f"To: {row.get('customer_email','— no email —')}")
-                        rc1, rc2 = st.columns([6, 1])
-                        rc1.caption("Edit before sending:")
-                        if rc2.button("↺", key=f"reset_{inv_id}"):
+                        rc1, rc2, rc3 = st.columns([4, 2, 1])
+                        rc1.caption(f"To: {row.get('customer_email','— no email —')}")
+                        with rc2:
+                            st.radio("", ["DE", "EN"], horizontal=True, key=f"lang_{inv_id}", label_visibility="collapsed")
+                        if rc3.button("↺", key=f"reset_{inv_id}"):
                             st.session_state[f"body_{inv_id}"] = body
                             st.rerun()
                         st.text_area("Email body", key=f"body_{inv_id}", height=200, label_visibility="collapsed")
@@ -894,7 +1013,7 @@ am_df = df[
     ~df["sequence_stage"].isin(["resolved", "debtist"])
 ].copy()
 
-tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
+tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9 = st.tabs([
     f"⚡ Queue ({len(action_df)})",
     f"👤 AM List ({len(am_df)})" if not am_df.empty else "👤 AM List",
     "📋 Cases",
@@ -903,6 +1022,7 @@ tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
     "📤 Debtist",
     "⚙️ Setup",
     "📖 Rules",
+    "🧪 Test",
 ])
 
 # ── Tab 1: Action Queue ────────────────────────────────────────────────────────
@@ -1116,6 +1236,9 @@ with tab3:
 # ── Tab 4: Emails ──────────────────────────────────────────────────────────────
 with tab4:
     st.caption("All emails auto-fill {variables} from invoice data and are editable before sending.")
+    preview_lang = st.radio("Preview language", ["DE", "EN"], horizontal=True, key="email_tab_lang", label_visibility="collapsed")
+    _tpls = TEMPLATES_DE if preview_lang == "DE" else TEMPLATES
+
     st.subheader("Both workflows — 4-stage automated sequence")
 
     email_meta = [
@@ -1125,7 +1248,7 @@ with tab4:
         ("email_4", f"Day 36", f"+{W1_WAIT['email_3']}d after urgent. Final notice — mentions Debtist escalation."),
     ]
     for tpl_key, day_label, desc in email_meta:
-        tpl = TEMPLATES[tpl_key]
+        tpl = _tpls[tpl_key]
         label = f"{STAGE_ICON.get(tpl_key,'')} {STAGE_LABEL.get(tpl_key, tpl_key)} — {day_label}"
         with st.expander(label, expanded=(tpl_key == "email_1")):
             st.caption(desc)
@@ -1136,7 +1259,7 @@ with tab4:
 
     st.divider()
     st.subheader("W2 only — AM personal follow-up (after all 4 automated emails)")
-    tpl = TEMPLATES["am_email"]
+    tpl = _tpls["am_email"]
     with st.expander(f"{STAGE_ICON.get('am_review','')} AM Email", expanded=True):
         st.caption(f"Sent personally by the assigned AM. Warm tone. Comes after the 4-stage automated sequence.")
         st.write(f"**Subject:** `{tpl['subject']}`")
@@ -1148,7 +1271,8 @@ with tab5:
     if resolved_df.empty:
         st.info("No resolved invoices yet — they'll appear here once marked as paid.")
     else:
-        total_recovered = resolved_df["amount_due"].sum()
+        real_resolved = resolved_df[resolved_df["customer_email"] != TEST_EMAIL]
+        total_recovered = real_resolved["amount_due"].sum()
         st.metric("Recovered", f"€{total_recovered:,.2f}", delta=f"{len(resolved_df)} invoices")
         disp_r = resolved_df[[
             "company", "customer_name", "invoice_number", "amount_due", "last_contacted_date",
@@ -1362,3 +1486,26 @@ with tab8:
             f"- W1 waits: Email 1 → +{W1_WAIT['email_1']}d → Email 2 → +{W1_WAIT['email_2']}d → Debtist\n"
             f"- W2 waits: same + AM Review (immediate) → AM Email → +{W2_WAIT['am_email']}d → Debtist"
         )
+
+# ── Tab 9: Test ────────────────────────────────────────────────────────────────
+with tab9:
+    test_df = df[df["customer_email"] == TEST_EMAIL].sort_values("due_date", ascending=False)
+    st.caption(f"Test invoices — {TEST_EMAIL}")
+    if test_df.empty:
+        st.info("No test accounts found.")
+    else:
+        st.metric("Test outstanding", f"€{test_df['amount_due'].sum():,.2f}", delta=f"{len(test_df)} invoices")
+        disp_t = test_df[[
+            "company", "customer_name", "invoice_number", "amount_due", "due_date",
+            "sequence_stage", "days_overdue",
+        ]].copy()
+        st.dataframe(disp_t, use_container_width=True, hide_index=True,
+            column_config={
+                "company":        st.column_config.TextColumn("Company"),
+                "customer_name":  st.column_config.TextColumn("Contact"),
+                "invoice_number": st.column_config.TextColumn("Invoice"),
+                "amount_due":     st.column_config.NumberColumn("Amount (€)", format="€%.2f"),
+                "due_date":       st.column_config.TextColumn("Due"),
+                "sequence_stage": st.column_config.TextColumn("Stage"),
+                "days_overdue":   st.column_config.NumberColumn("Days overdue"),
+            })
